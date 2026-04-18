@@ -8,6 +8,7 @@ create table api_keys (
 alter table api_keys enable row level security;
 create policy "Users own their api key" on api_keys
   for all using (auth.uid() = user_id);
+create index idx_api_keys_key on api_keys(key);
 
 -- Tasks
 create table tasks (
@@ -25,6 +26,7 @@ create table tasks (
 alter table tasks enable row level security;
 create policy "Users own their tasks" on tasks
   for all using (auth.uid() = user_id);
+create index idx_tasks_user_id on tasks(user_id);
 
 -- Auto-update updated_at
 create or replace function update_updated_at()
@@ -42,6 +44,7 @@ create table subscriptions (
   stripe_subscription_id text,
   plan text not null default 'free'
     check (plan in ('free', 'solo', 'team')),
+  created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
 alter table subscriptions enable row level security;
@@ -52,8 +55,10 @@ create policy "Users read own subscription" on subscriptions
 create or replace function handle_new_user()
 returns trigger as $$
 begin
-  insert into subscriptions (user_id) values (new.id);
-  insert into api_keys (user_id) values (new.id);
+  insert into subscriptions (user_id) values (new.id)
+    on conflict (user_id) do nothing;
+  insert into api_keys (user_id) values (new.id)
+    on conflict (user_id) do nothing;
   return new;
 end;
 $$ language plpgsql security definer;
