@@ -17,7 +17,13 @@ export async function POST(
   if (!userId) return NextResponse.json({ error: 'Invalid API key' }, { status: 401 })
 
   const { id } = await params
-  const { output } = await request.json()
+  let output: string | undefined
+  try {
+    const body = await request.json()
+    output = body.output
+  } catch {
+    return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
+  }
 
   const { error } = await supabase
     .from('tasks')

@@ -26,10 +26,20 @@ export async function GET(request: NextRequest) {
   }
 
   const task = tasks[0]
-  await supabase
+
+  // Conditionally claim — only update if still queued (reduces race window)
+  const { data: claimed, error: claimError } = await supabase
     .from('tasks')
     .update({ status: 'in_progress' })
     .eq('id', task.id)
+    .eq('status', 'queued')  // guard: only claim if still queued
+    .eq('user_id', userId)
+    .select()
 
-  return NextResponse.json({ task: { ...task, status: 'in_progress' } })
+  if (claimError || !claimed || claimed.length === 0) {
+    // Already claimed by another poll — return empty
+    return NextResponse.json({ task: null })
+  }
+
+  return NextResponse.json({ task: claimed[0] })
 }
