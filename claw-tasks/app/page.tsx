@@ -18,7 +18,7 @@ export default function LandingPage() {
         </Link>
         <div className="mt-20 grid grid-cols-3 gap-8 text-left">
           {[
-            { icon: '📋', title: 'Queue tasks visually', body: 'Drag, drop, and prioritise what your agent works on next.' },
+            { icon: '📋', title: 'Queue tasks visually', body: 'Queue, track, and prioritise what your agent works on next.' },
             { icon: '🔒', title: 'Secure by design', body: 'Your agent polls out — we never touch your machine.' },
             { icon: '💳', title: 'Simple pricing', body: 'Free to start. £9/mo for unlimited tasks. £29/mo for teams.' },
           ].map(f => (

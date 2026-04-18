@@ -1,11 +1,27 @@
 'use client'
 import { useState } from 'react'
 
-export function ApiKeyCard({ apiKey }: { apiKey: string }) {
+export function ApiKeyCard() {
   const [revealed, setRevealed] = useState(false)
+  const [apiKey, setApiKey] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
+  const [loading, setLoading] = useState(false)
+
+  async function reveal() {
+    if (apiKey) {
+      setRevealed(r => !r)
+      return
+    }
+    setLoading(true)
+    const res = await fetch('/api/user/apikey')
+    const { key } = await res.json()
+    setApiKey(key)
+    setRevealed(true)
+    setLoading(false)
+  }
 
   async function copy() {
+    if (!apiKey) return
     await navigator.clipboard.writeText(apiKey)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
@@ -19,14 +35,14 @@ export function ApiKeyCard({ apiKey }: { apiKey: string }) {
       </p>
       <div className="flex gap-2">
         <code className="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono truncate">
-          {revealed ? apiKey : '••••••••••••••••••••••••'}
+          {revealed && apiKey ? apiKey : '••••••••••••••••••••••••'}
         </code>
-        <button onClick={() => setRevealed(r => !r)}
-          className="px-3 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50">
-          {revealed ? 'Hide' : 'Show'}
+        <button onClick={reveal} disabled={loading}
+          className="px-3 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-40">
+          {loading ? '…' : revealed ? 'Hide' : 'Show'}
         </button>
-        <button onClick={copy}
-          className="px-3 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50">
+        <button onClick={copy} disabled={!apiKey}
+          className="px-3 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-40">
           {copied ? '✓' : 'Copy'}
         </button>
       </div>

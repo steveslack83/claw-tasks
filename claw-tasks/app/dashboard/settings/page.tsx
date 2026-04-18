@@ -5,12 +5,6 @@ export default async function SettingsPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const { data: apiKeyRow } = await supabase
-    .from('api_keys')
-    .select('key')
-    .eq('user_id', user!.id)
-    .single()
-
   const { data: subscription } = await supabase
     .from('subscriptions')
     .select('plan')
@@ -20,7 +14,7 @@ export default async function SettingsPage() {
   return (
     <div className="max-w-xl space-y-6">
       <h1 className="text-xl font-bold">Settings</h1>
-      <ApiKeyCard apiKey={apiKeyRow?.key ?? ''} />
+      <ApiKeyCard />
       <div className="bg-white rounded-xl border border-gray-200 p-5">
         <h2 className="font-semibold mb-1">Plan</h2>
         <p className="text-sm text-gray-500 mb-3">

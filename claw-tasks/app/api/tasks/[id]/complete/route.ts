@@ -25,12 +25,17 @@ export async function POST(
     return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
   }
 
-  const { error } = await supabase
+  const { data: updated, error } = await supabase
     .from('tasks')
     .update({ status: 'done', output })
     .eq('id', id)
     .eq('user_id', userId)
+    .eq('status', 'in_progress')
+    .select()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (!updated || updated.length === 0) {
+    return NextResponse.json({ error: 'Task not found or not in progress' }, { status: 409 })
+  }
   return NextResponse.json({ success: true })
 }

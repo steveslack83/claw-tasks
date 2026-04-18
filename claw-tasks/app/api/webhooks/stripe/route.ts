@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
+import Stripe from 'stripe'
 import { stripe } from '@/lib/stripe'
 import { createClient } from '@supabase/supabase-js'
-import Stripe from 'stripe'
+
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+}
 
 export async function POST(request: NextRequest) {
   const body = await request.text()
@@ -9,16 +16,26 @@ export async function POST(request: NextRequest) {
 
   if (!sig) return NextResponse.json({ error: 'Missing signature' }, { status: 400 })
 
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
-
   let event: Stripe.Event
   try {
     event = stripe.webhooks.constructEvent(body, sig, process.env.STRIPE_WEBHOOK_SECRET!)
   } catch {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
+  }
+
+  const supabase = getSupabase()
+
+  // Seed the stripe_customer_id on first successful checkout
+  if (event.type === 'checkout.session.completed') {
+    const session = event.data.object as Stripe.Checkout.Session
+    const userId = session.metadata?.user_id
+    const customerId = session.customer as string
+    if (userId && customerId) {
+      await supabase
+        .from('subscriptions')
+        .update({ stripe_customer_id: customerId })
+        .eq('user_id', userId)
+    }
   }
 
   if (
@@ -33,7 +50,6 @@ export async function POST(request: NextRequest) {
       .from('subscriptions')
       .update({
         stripe_subscription_id: sub.id,
-        stripe_customer_id: sub.customer as string,
         plan,
       })
       .eq('stripe_customer_id', sub.customer as string)
