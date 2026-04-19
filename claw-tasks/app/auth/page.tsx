@@ -20,7 +20,7 @@ export default function AuthPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 w-full max-w-sm">
         <div className="text-2xl mb-1">🦞</div>
-        <h1 className="text-xl font-bold mb-1">ClawTasks</h1>
+        <h1 className="text-xl font-bold text-gray-900 mb-1">ClawTasks</h1>
         <p className="text-sm text-gray-500 mb-6">Kanban for your OpenClaw agent</p>
         {sent ? (
           <p className="text-sm text-green-600">Check your email for a magic link ✓</p>
